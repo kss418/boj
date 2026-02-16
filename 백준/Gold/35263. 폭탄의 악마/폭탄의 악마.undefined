@@ -1,0 +1,166 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 201010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+int a[MAX], pre[MAX], cnt[MAX];
+class _ls{
+public:
+    vector <int> lp, prime, vphi, vmu; int n, flag; 
+    _ls(){}
+    _ls(int n, int flag = 0) : n(n), flag(flag){ init(); }
+    
+    void init(){
+        lp.assign(n + 1, 0);
+        if(n >= 3) prime.reserve((int)(n / log((ld)n)) + 10);
+        if(flag & 1) vphi.assign(n + 1, 0), vphi[1] = 1;
+        if(flag & 2) vmu.assign(n + 1, 0), vmu[1] = 1;
+
+        for(int i = 2;i <= n;i++){
+            if(!lp[i]){
+                lp[i] = i;
+                prime.push_back(i);
+                if(flag & 1) vphi[i] = i - 1;
+                if(flag & 2) vmu[i]  = -1;
+            }
+
+            for(auto& p : prime){
+                ll x = 1ll * p * i;
+                if(x > n) break;
+                lp[x] = p;
+                
+                if(i % p == 0){
+                    if(flag & 1) vphi[x] = vphi[i] * p;
+                    if(flag & 2) vmu[x] = 0;
+                    break;
+                }
+                else{
+                    if(flag & 1) vphi[x] = vphi[i] * (p - 1);
+                    if(flag & 2) vmu[x] = -vmu[i];
+                }
+            }
+        }
+    }
+
+    bool is_prime(int x) const{ return x >= 2 && lp[x] == x; }
+    vector <ll> factorize(int x){ // 소인수분해
+        vector <ll> ret;
+        while(x != 1){
+            ret.push_back(lp[x]);
+            x /= lp[x];
+        }
+        return ret;
+    }
+
+    vector <pll> factorize_cnt(int x){ // p^c 꼴로 소인수분해
+        vector <pll> ret;
+        while(x != 1){
+            ll p = lp[x], c = 0;
+            while(x % p == 0) x /= p, c++;
+            ret.push_back({p, c});
+        }
+        return ret;
+    }
+
+    ll divisor_num(int x){ // 약수의 개수
+        ll ret = 1;
+        while(x != 1){
+            ll p = lp[x], c = 0;
+            while(x % p == 0) x /= p, c++;
+            ret *= c + 1;
+        }
+        return ret;
+    }
+
+    ll divisor_sum(int x){  // 약수의 합
+        if(x == 0 || x == 1) return x;   
+        ll ret = 1;
+        while(x != 1){
+            ll p = lp[x], sum = 1, cur = 1;
+            while(x % p == 0){
+                x /= p;
+                cur *= p;
+                sum += cur;
+            }
+            ret *= sum;
+        }
+        return ret;
+    }
+
+    vector <ll> divisor(int x){ // 약수 벡터 반환
+        if(!x) return {};
+        if(x == 1) return {1};
+        auto fc = factorize_cnt(x);
+        vector <ll> ret = {1};
+        for(auto& [p, c] : fc){
+            ll mul = 1, sz = ret.size();
+            for(ll k = 1;k <= c;k++){
+                mul *= p;
+                for(int i = 0;i < sz;i++) ret.push_back(ret[i] * mul);
+            }
+        }
+
+        sort(all(ret));
+        return ret;
+    }
+
+    ll phi(int x) const { return vphi[x]; } // 오일러 피
+    ll mobius(int x) const { return vmu[x]; } // 뫼비우스
+}; _ls ls(501010);
+
+ld dfs(int cur, int cnt, ld pb){
+    if(!cnt) return (ld)cur * pb;
+
+    vector <int> arr;
+    for(int i = 2;i * i <= cur;i++){
+        if(cur % i) continue;
+        if(ls.is_prime(i)) arr.push_back(i);
+        if(i * i != cur && ls.is_prime(cur / i)) arr.push_back(cur / i);
+    }
+
+    if(arr.empty()) return (ld)cur * pb;
+    ld ret = 0;
+    for(auto& i : arr){
+        ret += dfs(i, cnt - 1, pb / (ld)arr.size());
+
+    }
+    return ret;
+}
+
+void run(){
+    cin >> n >> m;
+    for(int i = 1;i <= n;i++) cin >> a[i];
+    while(m--){
+        int s, e; cin >> s >> e;
+        pre[s]++; pre[e + 1]--;
+    }
+
+    int sum = 0;
+    for(int i = 1;i <= n;i++){
+        sum += pre[i];
+        cnt[i] = sum;
+    }
+
+    ld result = 0;
+    for(int i = 1;i <= n;i++) result += dfs(a[i], cnt[i], 1);
+
+    cout << setprecision(15) << result;
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
