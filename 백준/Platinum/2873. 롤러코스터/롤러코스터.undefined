@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 1010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+int a[MAX][MAX];
+bool v[MAX][MAX];
+pair <int, int> ban;
+bool outrange(int cy, int cx){
+    if(cy == ban.x && cx == ban.y) return 1;
+    return cy <= 0 || cx <= 0 || cy > n || cx > m || v[cy][cx];
+}
+
+bool chk1(int cx){
+    if(cx != ban.y && cx + 1 != ban.y) return 0;
+    return 1;
+}
+
+bool chk2(int cy){
+    if(cy != ban.x && cy + 1 != ban.x) return 0;
+    return 1;
+}
+
+bool chk(int cy, int cx){
+    return chk1(cx) && chk2(cy);
+}
+
+void push(vector<char>& v, const string& s){
+    for(auto& i : s) v.push_back(i);
+}
+
+void run(){
+    cin >> n >> m;
+    for(int i = 1;i <= n;i++){
+        for(int j = 1;j <= m;j++) cin >> a[i][j];
+    }
+
+    if(n % 2){
+        for(int i = 1;i <= n;i++){
+            for(int j = 1;j < m;j++){
+                cout << (i % 2 ? 'R' : 'L');
+            }
+            if(i != n) cout << 'D';
+        }
+    }
+    else if(m % 2){
+        for(int i = 1;i <= m;i++){
+            for(int j = 1;j < n;j++){
+                cout << (i % 2 ? 'D' : 'U');
+            }
+            if(i != m) cout << 'R';
+        }
+    }
+    else{
+        int mn = 0x3f3f3f3f;
+        for(int i = 1;i <= n;i++){
+            for(int j = 1;j <= m;j++){
+                if((i + j) % 2 == 0) continue;
+                if(a[i][j] >= mn) continue;
+                mn = a[i][j]; ban = {i, j};
+            }
+        }
+        
+        bool flag = 0;
+        vector <char> result;
+        if(n != 2){
+            for(int i = 1;i <= m;i += 2){
+                if(!chk1(i)){
+                    for(int i = 1;i < n;i++) result.push_back(flag ? 'U' : 'D');
+                    result.push_back('R');
+                    for(int i = 1;i < n;i++) result.push_back(flag ? 'D' : 'U');
+                }
+                else{
+                    for(int j = 1;j <= n;j += 2){
+                        if(!chk(j, i)){
+                            if(!flag) push(result, "RDLD");
+                            else push(result, "LDRD");
+                        }
+                        else{
+                            if(ban.x == j) push(result, "DRD");
+                            else push(result, "RDD");
+                            flag = 1;
+                        }
+                    }
+                    result.pop_back();
+                }
+                result.push_back('R');
+            }
+        }
+        else{
+            for(int i = 1;i <= n;i += 2){
+                if(!chk2(i)){
+                    for(int i = 1;i < m;i++) result.push_back(flag ? 'L' : 'R');
+                    result.push_back('D');
+                    for(int i = 1;i < m;i++) result.push_back(flag ? 'L' : 'R');
+                }
+                else{
+                    for(int j = 1;j <= m;j += 2){
+                        if(!chk(i, j)){
+                            if(!flag) push(result, "DRUR");
+                            else push(result, "URDR");
+                        }
+                        else{
+                            if(ban.x == i) push(result, "DRR");
+                            else push(result, "RDR");
+                            flag = 1;
+                        }
+                    }
+                    result.pop_back();
+                }
+                result.push_back('D');
+            }
+        }
+
+        result.pop_back();
+        for(auto& i : result) cout << i; 
+    }
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
