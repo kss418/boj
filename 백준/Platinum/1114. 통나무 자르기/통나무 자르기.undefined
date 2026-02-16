@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 10101; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+class _bs { // integer
+public:
+    template <class F>
+    static ll max_right(ll l, ll r, const F& f) {
+        ll lo = l, hi = r, mid = -1;
+        while (hi > lo) {
+            mid = (hi + lo + 1) >> 1ll;
+            if (f(mid)) lo = mid;
+            else hi = mid - 1;
+        }
+        return lo;
+    }
+
+    template <class F>
+    static ll min_left(ll l, ll r, const F& f) {
+        ll lo = l, hi = r, mid = -1;
+        while (hi > lo) {
+            mid = (hi + lo) >> 1ll;
+            if (f(mid)) hi = mid;
+            else lo = mid + 1;
+        }
+        return lo;
+    }
+};
+
+vector <int> a;
+bool len(int num){
+    if(a.back() - a[a.size() - 2] > num) return 0;
+    int cnt = 0, pre = 0; 
+    for(int i = 1;i < a.size() - 1;i++){
+        if(a[i + 1] - pre > num){
+            if(a[i] - pre > num) return 0;
+            pre = a[i]; cnt++;
+        }
+    }
+
+    if(a.back() - pre > num) cnt++;
+    return cnt <= k;
+}
+
+int l;
+bool fi(int num){
+    if(a[num] > l) return 0;
+    int cnt = 1, pre = a[num];
+    for(int i = num + 1;i < a.size() - 1;i++){
+        if(a[i + 1] - pre > l){
+            if(a[i] - pre > l) return 0;
+            pre = a[i]; cnt++;
+        }
+    }
+
+    if(a.back() - pre > l) cnt++;
+    return cnt <= k;
+}
+
+void run(){
+    cin >> n >> m >> k; a.push_back(0);
+    for(int i = 1;i <= m;i++){
+        int v; cin >> v;
+        a.push_back(v);
+    }
+    a.push_back(n);
+    sort(all(a));
+    a.erase(unique(all(a)), a.end());
+
+    l = _bs::min_left(1, n, len);
+    int mx = a.size() - 1;
+    for(int i = 1;i < a.size();i++){
+        if(a[i] <= l) continue;
+        mx = i - 1; break;
+    }
+    
+    int idx = _bs::min_left(1, mx, fi);
+    cout << l << " " << a[idx];
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
