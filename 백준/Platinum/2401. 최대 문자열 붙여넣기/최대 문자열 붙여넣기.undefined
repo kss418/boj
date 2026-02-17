@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 101010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+template <class T = ll>
+class _kmp{ // 0-based index
+private:
+    int m;
+    vector <T> pat; vector <int> f;
+    void build(){
+        m = (int)pat.size(); int nxt = 0; f.assign(m, 0);
+        for(int cur = 1;cur < m;cur++){
+            while(nxt && pat[cur] != pat[nxt]) nxt = f[nxt - 1];
+            if(pat[cur] == pat[nxt]) f[cur] = ++nxt;
+        }
+    }
+
+    static vector <T> tf(const string& s){
+        vector <T> ret; ret.reserve(s.size());
+        for(unsigned char c : s) ret.push_back(T(c));
+        return ret;
+    }
+public:
+    _kmp() : m(0){}
+    _kmp(const string& s){ set(s); } // O(|s|)
+    _kmp(span<const T> v){ set(v); } // O(|v|)
+    void clear(){ pat.clear(); f.clear(); m = 0; } // O(1)
+    void set(const string& s){ pat = tf(s); build(); } // O(|s|)
+    void set(span<const T> v){ pat.assign(all(v)); build(); } // O(|v|)
+
+    const vector<int>& fail() const{ return f; } // O(1)
+    template <class F>
+    void it_match(const string& s, const F& f) const{ it_match(tf(s), f);} // O(|s| + m)
+    template <class F>
+    void it_match(span<const T> v, const F& f) const{ // O(|v| + m)
+        int n = (int)v.size();
+        if(!m) return; int state = 0;
+        for(int i = 0;i < n;i++){
+            state = go(state, v[i]);
+            if(state == m) f(i - m + 1);
+        }
+    }
+
+    int go(int state, const T& ch) const{ // amortized O(1)
+        if(!m) return 0;
+        if(state == m) state = f[m - 1];
+        while(state && ch != pat[state]) state = f[state - 1];
+        if(ch == pat[state]) state++;
+        return state;
+    }
+
+    template <class F>
+    void it_border(const F& f) const{ // O(m)
+        if(!m) return;
+        for(int x = f[m - 1];x > 0;x = f[x - 1]) f(x);
+    }
+}; _kmp <int> kmp[505];
+
+vector <int> adj[MAX];
+int dp[MAX], st[505], sz[505];
+
+void run(){
+    cin >> s >> n; memset(dp, 0xc0, sizeof(dp));
+    dp[0] = 0;
+    for(int i = 1;i <= n;i++){
+        string tmp; cin >> tmp;
+        kmp[i].set(tmp);
+        sz[i] = tmp.size();
+    }
+
+    for(int i = 0;i < s.size();i++){
+        dp[i + 1] = max(dp[i + 1], dp[i]);
+        for(int j = 1;j <= n;j++){
+            st[j] = kmp[j].go(st[j], s[i]);
+            if(st[j] == sz[j]) dp[i + 1] = max(dp[i + 1], dp[i - sz[j] + 1] + sz[j]);
+        }
+    }
+
+    cout << dp[s.size()];
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
