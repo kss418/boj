@@ -1,0 +1,179 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 1010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+template <int M>
+class _trie { // 0-based index
+public:
+    vector <int> arr;
+private:
+    vector <array<int, M>> adj;
+    vector <int> cnt, pass;
+    int new_node(){
+        adj.push_back(array<int, M>{}); cnt.push_back(0); pass.push_back(0); arr.push_back(0);
+        return (int)adj.size() - 1;
+    }
+public:
+    vector <int> tf(const string& s) const{  
+        vector <int> ret;
+        for(auto& i : s){
+            if('a' <= i && i <= 'z') ret.push_back(i - 'a');
+            else if('A' <= i && i <= 'Z') ret.push_back(i - 'A' + 26);
+            else if('0' <= i && i <= '9') ret.push_back(i - '0' + 52);
+            else ret.push_back(62);
+        }
+        return ret;
+    }
+
+    int get_state(span<const int> v) const{
+        int cur = 0;
+        for(auto& c : v){
+            assert(0 <= c && c < M);
+            if (!adj[cur][c]) return -1;
+            cur = adj[cur][c];
+        }
+        return cur;
+    }
+
+    _trie(){ clear(); } // O(1)
+    void clear(){ adj.clear(); cnt.clear(); pass.clear(); arr.clear(); new_node(); } // O(1)
+    void reserve(int max_node){ // O(1)
+        adj.reserve(max_node); cnt.reserve(max_node);
+        pass.reserve(max_node);
+    }
+
+    int size() const{ return pass.empty() ? 0 : pass[0]; } // O(1)
+    void insert(const string& s, int num){ auto v = tf(s); insert(v, num); } // O(|s|)
+    void insert(span<const int> v, int num){ // O(|v|)
+        int cur = 0; pass[cur]++;
+        for(auto &c : v){
+            assert(0 <= c && c < M);
+            if(!adj[cur][c]) adj[cur][c] = new_node();
+            cur = adj[cur][c]; pass[cur]++;
+        }
+        cnt[cur]++; arr[cur] = num;
+    }
+
+    bool erase(const string& s){ auto v = tf(s); return erase(v); } // O(|s|)
+    bool erase(span<const int> v){ // O(|v|)
+        int state = get_state(v);
+        if(state == -1 || !cnt[state]) return 0; 
+        int cur = 0; cnt[state]--; pass[cur]--;
+        for(auto &c : v){ cur = adj[cur][c]; pass[cur]--; }
+        return 1;
+    }
+
+    int count(const string& s) const{ auto v = tf(s); return count(v); } // O(|s|)
+    int count(span<const int> v) const{ return count(get_state(v)); } // O(|v|)
+    int count(int state) const{ return (state == -1 ? 0 : cnt[state]); } // O(1);
+
+    int prefix_count(const string& prefix) const { auto v = tf(prefix); return prefix_count(v); } // O(|s|)
+    int prefix_count(span<const int> v) const { return prefix_count(get_state(v)); } // O(|v|)
+    int prefix_count(int state) const{ return (state == -1 ? 0 : pass[state]); } // O(1)
+
+    int rank(const string& s) const{ auto v = tf(s); return rank(v); } // O(|s| * m)
+    int rank(span<const int> v) const{ // O(|v| * m)
+        int ret = 0, cur = 0;
+        for(auto& c : v){
+            assert(0 <= c && c < M);
+            ret += cnt[cur];
+            for(int x = 0;x < c;x++){
+                int nxt = adj[cur][x];
+                if(nxt) ret += pass[nxt];
+            }
+            int nxt = adj[cur][c];
+            if(!nxt) return ret; cur = nxt;
+        }
+        return ret;
+    }
+
+    vector <int> kth(int k) const{ // O(max_len * m)
+        if(k <= 0 || k > pass[0]) return {};
+        vector <int> ret; int cur = 0;
+        while(1){
+            if(k <= cnt[cur]) break;
+            k -= cnt[cur];
+            for(int c = 0;c < M;c++){
+                int nxt = adj[cur][c];
+                if(!nxt) continue;
+                if(pass[nxt] >= k){
+                    ret.push_back(c);
+                    cur = nxt; break;
+                }
+                else k -= pass[nxt];
+            }
+        }
+        return ret;
+    }
+
+    int go(int state, int c) const{ // O(1)
+        if(state < 0 || state >= (int)adj.size()) return -1;
+        assert(0 <= c && c < M);
+        int nxt = adj[state][c];
+        return nxt ? nxt : -1;
+    }
+}; _trie <63> trie;
+
+string er[MAX], ban[MAX];
+int num[40404];
+int dfs(int cur = 0){
+    int& ret = num[cur];
+    ret = trie.arr[cur];
+    for(int i = 0;i < 63;i++){
+        int nxt = trie.go(cur, i);
+        if(nxt == -1) continue;
+        ret = max(ret, dfs(nxt));
+    }
+
+    return ret;
+}
+
+int solve(int cur = 0){
+    if(!num[cur]) return 0;
+    if(num[cur] == 1) return 1;
+
+    int ret = trie.arr[cur] == 1;
+    for(int i = 0;i < 63;i++){
+        int nxt = trie.go(cur, i);
+        if(nxt == -1) continue;
+        ret += solve(nxt);
+    }
+
+    return ret;
+}
+
+void run(){
+    cin >> n; trie.clear();
+    for(int i = 0;i < n;i++){
+        cin >> s;
+        trie.insert(s, 1);
+    }
+
+    cin >> m;
+    for(int i = 0;i < m;i++){
+        cin >> s;
+        trie.insert(s, 2);
+    }
+
+    dfs();
+    cout << solve() << "\n";
+}
+
+int main() {
+    fastio; cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
