@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 301010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+vector <pll> arr;
+vector <int> adj[MAX];
+ll result;
+stack <pll> st;
+
+void dfs(int cur){
+    int len = arr[cur].y - arr[cur].x, sum = 0;
+    for(auto& nxt : adj[cur]){
+        dfs(nxt);
+        sum += arr[nxt].y - arr[nxt].x;
+    }
+
+    result += (len == sum);
+}
+
+void run(){
+    cin >> n;
+    for(int i = 1;i <= n;i++){
+        int x, r; cin >> x >> r;
+        arr.push_back({x - r, x + r});
+    }
+    sort(all(arr), [](pll a, pll b){
+        if(a.x != b.x) return a.x < b.x;
+        return a.y > b.y;
+    });
+
+    st.push({INF, n});
+    for(int i = 0;i < arr.size();i++){
+        auto& [l, r] = arr[i];
+        while(!st.empty() && st.top().x <= l){
+            auto [e, idx] = st.top(); st.pop();
+            adj[st.top().y].push_back(idx);
+        }
+        st.push({r, i});
+    }
+
+    while(st.size() > 1){
+        auto [e, idx] = st.top(); st.pop();
+        adj[st.top().y].push_back(idx);
+    }
+
+    for(auto& i : adj[n]) dfs(i);
+
+    result += n + 1;
+    cout << result;
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
