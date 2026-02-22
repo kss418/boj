@@ -1,0 +1,174 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 201010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+class _mint{
+public:
+    ll mod, v;
+    _mint(ll v = 0, ll mod = 1) : mod(mod), v(norm(v, mod)) {}
+    static ll norm(ll x, ll m){ x %= m; return x < 0 ? x + m : x; }
+    static tll gcd(ll a, ll b){
+        if (b == 0) return {a, 1, 0};
+        auto [g, x, y] = gcd(b, a % b);
+        return {g, y, x - (a / b) * y};
+    }
+
+    _mint inv() const{
+        assert(v);
+        auto [g, x, y] = gcd(v, mod);
+        assert(g == 1 || g == -1);
+        if(g == -1) x *= -1;
+        return _mint(x, mod);
+    }
+
+    _mint pow(ll e) const{
+        assert(e >= 0);
+        _mint base = *this, ret(1, mod);
+        while(e){
+            if(e & 1) ret *= base;
+            base *= base; e >>= 1ll;
+        }
+        return ret;
+    }
+
+    _mint& operator+=(const _mint& ot){
+        assert(mod == ot.mod);
+        v += ot.v;
+        if (v >= mod) v -= mod;
+        return *this;
+    }
+
+    _mint& operator-=(const _mint& ot){
+        assert(mod == ot.mod);
+        v -= ot.v;
+        if (v < 0) v += mod;
+        return *this;
+    }
+
+    _mint& operator*=(const _mint& ot){
+        assert(mod == ot.mod);
+        v = (ll)((i128)v * ot.v % mod);
+        return *this;
+    }
+    _mint& operator/=(const _mint& ot){ return (*this) *= ot.inv(); }
+
+    friend _mint operator+(_mint a, const _mint& b){ return a += b; }
+    friend _mint operator-(_mint a, const _mint& b){ return a -= b; }
+    friend _mint operator*(_mint a, const _mint& b){ return a *= b; }
+    friend _mint operator/(_mint a, const _mint& b){ return a /= b; }
+    _mint& operator+=(ll b){ return (*this) += _mint(b, mod); }
+    _mint& operator-=(ll b){ return (*this) -= _mint(b, mod); }
+    _mint& operator*=(ll b){ return (*this) *= _mint(b, mod); }
+    _mint& operator/=(ll b){ return (*this) /= _mint(b, mod); }
+    friend _mint operator+(_mint a, ll b){ return a += b; }
+    friend _mint operator-(_mint a, ll b){ return a -= b; }
+    friend _mint operator*(_mint a, ll b){ return a *= b; }
+    friend _mint operator/(_mint a, ll b){ return a /= b; }
+    friend ostream& operator<<(ostream& os, const _mint& a){ return os << a.v; }
+};
+
+
+class _hash{ // 0-based index
+private:
+    using pi = pair<int, int>;
+    class _core {
+    public:
+        vector <int> pw, pre, ipw; 
+        _mint key, inv; int mod; 
+        _core(){};
+        _core(int key, int mod) : mod(mod), key(key, mod){ // O(n)
+            assert(mod > 1); assert(this->key.v > 0);
+            pre.clear(); pw.clear(); ipw.clear();
+            pw.push_back(1); ipw.push_back(1); inv = this->key.inv();
+        }
+
+        void ensure_pw(int k){ 
+            while((int)pw.size() <= k){
+                pw.push_back((_mint(pw.back(), mod) * key).v); 
+                ipw.push_back((_mint(ipw.back(), mod) * inv).v); 
+            }
+        }
+
+        int size() const{ return (int)pre.size(); }
+        void push_back(int v){ // O(1)
+            _mint now = _mint(v, mod); ensure_pw(size());
+            if(pre.empty()) pre.push_back(now.v);
+            else pre.push_back((_mint(pre.back(), mod) + now * pw[size()]).v);
+        }
+
+        void pop_back(){ // O(1)
+            assert(!pre.empty());
+            pre.pop_back();
+        }
+
+        ll ret(int l, int r) const{ // O(1)
+            _mint ret = _mint(pre[r], mod);
+            if(l > 0) ret -= _mint(pre[l - 1], mod);
+            ret *= ipw[l];
+            return ret.v;
+        }
+    }; array <_core, 2> arr; 
+public:
+    _hash(pi key = {1, 1}, pi mod = {2, 2}){ clear(key, mod); }
+    void clear(pi key, pi mod){ // O(1)
+        arr[0] = {key.x, mod.x}; arr[1] = {key.y, mod.y};
+    } 
+
+    void reset(){ arr[0].pre.clear(); arr[1].pre.clear(); }
+    void push_back(int v){ for(auto& c : arr) c.push_back(v); } // O(1)
+    void pop_back(){ for(auto& c : arr) c.pop_back(); } // O(1)
+    int size() const{ return arr[0].size(); } // O(1)
+    ll ret(int l, int r) const{ // O(1)
+        return ((ll)arr[0].ret(l, r) << 32) + arr[1].ret(l, r);
+    }
+
+    bool same(int l1, int r1, int l2, int r2) const{ // O(1)
+        for(const auto& c : arr) if(c.ret(l1, r1) != c.ret(l2, r2)) return 0;
+        return 1;
+    }
+}; 
+
+set <ll> num1, num2;
+string a, b;
+void run(){
+    cin >> n >> m >> a >> b;
+
+    _hash hash({26, 31}, {MOD, 1e9 + 7});
+    for(int i = 0;i < n;i++){
+        hash.push_back(a[i] - '1');
+        if(i >= m - 1) num1.insert(hash.ret(i - m + 1, i));
+    }
+
+    hash.reset();
+    for(int i = 0;i < n;i++){
+        hash.push_back(b[i] - '1');
+        if(i >= m - 1) num2.insert(hash.ret(i - m + 1, i));
+    }
+
+    int result = 0;
+    for(auto& v : num1){
+        if(!num2.count(v)) continue;
+        result++;
+    }
+
+    cout << result;
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
