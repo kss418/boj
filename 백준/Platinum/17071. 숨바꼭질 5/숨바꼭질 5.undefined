@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 501010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+int d[MAX][2], num[MAX];
+deque <pair<int, bool>> q;
+
+bool chk(int diff, int f, int d){
+    if(diff < 0 || num[diff] == -1) return 0;
+    if(d > num[diff]) return 0;
+    return num[diff] % 2 == f;
+}
+
+void run(){
+    cin >> n >> m; memset(d, 0x3f, sizeof(d));
+    q.push_back({n, 0}); memset(num, -1, sizeof(num));
+
+    int sum = 0; num[0] = 0;
+    for(int i = 1;i < MAX;i++){
+        sum += i;
+        if(sum > MAX) break;
+        num[sum] = i;
+    }
+
+    int result = 0x3f3f3f3f; d[n][0] = 0;
+    while(!q.empty()){
+        auto [cur, f] = q.front(); q.pop_front();
+        if(chk(cur - m, f, d[cur][f])){
+            result = min(result, max(d[cur][f], num[cur - m]));
+        }  
+
+        for(auto nxt : {cur - 1, cur + 1, 2 * cur}){
+            if(nxt < 0 || nxt > 500000) continue;
+            if(d[nxt][f ^ 1] <= d[cur][f] + 1) continue;
+            d[nxt][f ^ 1] = d[cur][f] + 1;
+            q.push_back({nxt, f ^ 1});
+        }
+    }
+
+    cout << (result == 0x3f3f3f3f ? -1 : result);
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
