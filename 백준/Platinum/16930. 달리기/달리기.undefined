@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 1010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+string st[MAX];
+set <pair<int, bool>> sx[MAX], sy[MAX];
+deque <pair<int, int>> q;
+int d[MAX][MAX];
+
+void er(int cy, int cx){
+    sx[cy].erase({cx, 0});
+    sy[cx].erase({cy, 0});
+}
+
+void run(){
+    cin >> n >> m >> k; memset(d, 0x3f, sizeof(d));
+    for(int i = 0;i < n;i++) cin >> st[i];
+    int x1, y1, x2, y2; cin >> y1 >> x1 >> y2 >> x2;
+    x1--; y1--; x2--; y2--;
+
+    for(int i = 0;i < n;i++){
+        for(int j = 0;j < m;j++){
+            sx[i].insert({j, st[i][j] == '#'});
+            sy[j].insert({i, st[i][j] == '#'});
+        }
+    }
+
+    d[y1][x1] = 0; er(y1, x1);
+    q.push_back({y1, x1});
+    while(!q.empty()){
+        auto [cy, cx] = q.front(); q.pop_front();
+
+        auto it = sx[cy].upper_bound({cx, 0});
+        while(it != sx[cy].end() && it->x <= cx + k){
+            if(it->y) break;
+            int ny = cy, nx = it->x;
+            er(ny, nx); d[ny][nx] = d[cy][cx] + 1;
+            q.push_back({ny, nx});
+            it = sx[ny].upper_bound({nx, 0});
+        }
+
+        it = sx[cy].lower_bound({cx, 0});
+        while(it != sx[cy].begin()){
+            --it;
+            if(it->y || it->x < cx - k) break;
+            int ny = cy, nx = it->x;
+            er(ny, nx); d[ny][nx] = d[cy][cx] + 1;
+            q.push_back({ny, nx});
+            it = sx[ny].lower_bound({nx, 0});
+        }
+
+        it = sy[cx].upper_bound({cy, 0});
+        while(it != sy[cx].end() && it->x <= cy + k){
+            if(it->y) break;
+            int ny = it->x, nx = cx;
+            er(ny, nx); d[ny][nx] = d[cy][cx] + 1;
+            q.push_back({ny, nx});
+            it = sy[nx].upper_bound({ny, 0});
+        }
+
+        it = sy[cx].lower_bound({cy, 0});
+        while(it != sy[cx].begin()){
+            --it;
+            if(it->y || it->x < cy - k) break;
+            int ny = it->x, nx = cx;
+            er(ny, nx); d[ny][nx] = d[cy][cx] + 1;
+            q.push_back({ny, nx});
+            it = sy[nx].lower_bound({ny, 0});
+        }
+    }
+
+    cout << (d[y2][x2] == 0x3f3f3f3f ? -1 : d[y2][x2]);
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
