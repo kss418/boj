@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 55; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+using pi = pair<int, int>;
+vector <pi> tmp, arr;
+int dist(pi cur, pi ot){
+    return abs(cur.x - ot.x) + abs(cur.y - ot.y);
+}
+
+void comp(vector <int>& v){
+    sort(all(v));
+    v.erase(unique(all(v)), v.end());
+}
+
+int result[MAX];
+vector <int> vx, vy;
+void run(){
+    cin >> n; memset(result, 0x3f, sizeof(result));
+    for(int i = 1;i <= n;i++){
+        int x, y; cin >> x >> y;
+        vx.push_back(x); vy.push_back(y);
+        tmp.push_back({x, y});
+    }
+
+    comp(vx); comp(vy);
+    for(auto& i : vx){
+        for(auto& j : vy) arr.push_back({i, j});
+    }
+
+    for(auto& i : arr){
+        sort(all(tmp), [&](const pi& a, const pi& b){
+            return dist(i, a) < dist(i, b);
+        });
+
+        int sum = 0;
+        for(int j = 0;j < n;j++){
+            sum += dist(i, tmp[j]);
+            result[j] = min(result[j], sum);
+        }
+    }
+
+    for(int i = 0;i < n;i++) cout << result[i] << " ";
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
