@@ -1,0 +1,180 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 55; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+template <class F = ll, class C = ll> requires (
+    is_integral_v<F> && is_signed_v<F> && is_integral_v<C> && is_signed_v<C>
+)
+class _mcmf {
+public:
+    template <class T>
+    static consteval T make_inf() {
+        T x = 0;
+        for (size_t i = 0; i < sizeof(T); ++i) x = (x << 8) | T(0x3f);
+        return x;
+    }
+    static constexpr F FINF = make_inf<F>();
+    static constexpr C CINF = make_inf<C>();
+    struct edge{
+        int nxt, rev; F cap; C cost;
+        edge(int nxt, int rev, F cap, C cost) : nxt(nxt), rev(rev), cap(cap), cost(cost) {}
+    };
+private:
+    vector<vector<edge>> adj; vector<C> dist, pot; 
+    vector<int> work, lv; int n; bool use_spfa;
+    void spfa(int st) {
+        fill(all(pot), CINF);
+        vector <bool> in(n + 1, 0); queue <int> q;
+        pot[st] = 0; q.push(st); in[st] = 1;
+        while (!q.empty()) {
+            int cur = q.front(); q.pop(); in[cur] = 0;
+            for(auto &e : adj[cur]){
+                if (e.cap <= 0) continue; int nxt = e.nxt;
+                if (pot[nxt] <= pot[cur] + e.cost) continue;
+                pot[nxt] = pot[cur] + e.cost;
+                if (!in[nxt]) q.push(nxt), in[nxt] = 1;
+            }
+        }
+        for(int i = 0; i <= n; i++) if(pot[i] >= CINF) pot[i] = 0;
+    }
+
+    bool dijkstra(int st, int en){
+        using pci = pair<C, int>;
+        fill(all(dist), CINF); dist[st] = 0;
+        priority_queue<pci, vector<pci>, greater<pci>> pq;
+        pq.push({0, st});
+        while (!pq.empty()) {
+            auto [cd, cur] = pq.top(); pq.pop();
+            if (cd != dist[cur]) continue;
+            for (int i = 0;i < (int)adj[cur].size();i++) {
+                auto &e = adj[cur][i];
+                if(e.cap <= 0) continue; int nxt = e.nxt;
+                C nd = cd + e.cost + pot[cur] - pot[nxt];
+                if(nd >= dist[nxt]) continue;
+                dist[nxt] = nd; pq.push({nd, nxt});
+            }
+        }
+        if (dist[en] >= CINF) return false;
+        for (int i = 0;i <= n;i++) {
+            if (dist[i] < CINF) pot[i] += dist[i];
+        }
+        return true;
+    }
+
+    bool bfs(int st, int en){
+        fill(all(lv), -1); queue <int> q;
+        lv[st] = 0; q.push(st);
+        while(!q.empty()){
+            int cur = q.front(); q.pop();
+            for(auto& e : adj[cur]){
+                int nxt = e.nxt;
+                if(e.cost + pot[cur] - pot[nxt] != 0) continue;
+                if(lv[nxt] != -1 || e.cap <= 0) continue;
+                lv[nxt] = lv[cur] + 1; q.push(nxt);
+            }
+        }
+        return lv[en] != -1;
+    }
+
+    F dfs(int cur, int en, F f){
+        if(cur == en) return f;
+        for(int &i = work[cur]; i < (int)adj[cur].size(); i++){
+            auto &e = adj[cur][i];
+            if(e.cap <= 0) continue; int nxt = e.nxt;
+            if(e.cost + pot[cur] - pot[nxt] != 0) continue;
+            if(lv[nxt] != lv[cur] + 1) continue; 
+            F now = dfs(nxt, en, min(f, e.cap));
+            if(now <= 0) continue;
+            e.cap -= now; adj[nxt][e.rev].cap += now;
+            return now;
+        }
+        return 0;
+    }
+public:
+    _mcmf(int n = 0, bool use_spfa = true) { clear(n, use_spfa); }
+    void clear(int n, bool use_spfa = true) {
+        this->n = n; this->use_spfa = use_spfa; adj.assign(n + 1, {});
+        dist.assign(n + 1, CINF); pot.assign(n + 1, 0);
+        work.assign(n + 1, 0); lv.assign(n + 1, -1);
+    }
+
+    void add(int st, int en, F cap, C cost){
+        addsol(st, en, cap, cost); addsol(en, st, cap, cost);
+    }
+    void addsol(int st, int en, F cap, C cost){
+        int a = (int)adj[st].size(), b = (int)adj[en].size();
+        adj[st].push_back({en, b, cap, cost});
+        adj[en].push_back({st, a, 0, -cost});
+    }
+
+    pair<F, C> build(int st, int en, F limit = FINF) {
+        F flow = 0; C cost = 0;
+        if(use_spfa) spfa(st);
+        while(flow < limit && dijkstra(st, en)) {
+            while(flow < limit && bfs(st, en)){
+                fill(all(work), 0);
+                while(flow < limit){
+                    F now = dfs(st, en, limit - flow);
+                    if(now <= 0) break;
+                    flow += now; cost += now * (pot[en] - pot[st]);
+                }
+            }
+        }
+        return {flow, cost};
+    }
+};
+
+int num(char c){ return c == 'F' ? 4 : c - 'A'; }
+int idx(int cy, int cx){ return cy * m + cx; }
+int c[5][5] = {
+    {10, 8, 7, 5, 1},
+    {8, 6, 4, 3, 1},
+    {7, 4, 3, 2, 1},
+    {5, 3, 2, 2, 1},
+    {1, 1, 1, 1, 0}
+};
+
+int dy[4] = {0, 0, 1, -1}, dx[4] = {1, -1, 0, 0};
+bool out(int cy, int cx){
+    return cy < 0 || cx < 0 || cy >= n || cx >= m;
+}
+
+string st[MAX];
+void run(){
+    cin >> n >> m; _mcmf <int, int> mcmf(n * m + 1);
+    for(int i = 0;i < n;i++) cin >> st[i];
+    for(int i = 0;i < n;i++){
+        for(int j = 0;j < m;j++){      
+            mcmf.addsol(idx(i, j), n * m + 1, 1, 0);
+            if((i + j) % 2) continue;
+            for(int k = 0;k < 4;k++){
+                int ny = i + dy[k], nx = j + dx[k];
+                if(out(ny, nx)) continue;
+                int now = c[num(st[i][j])][num(st[ny][nx])];
+                mcmf.addsol(idx(i, j), idx(ny, nx), 1, -now);
+            }
+            mcmf.addsol(n * m, idx(i, j), 1, 0);
+        }
+    }
+
+    cout << -mcmf.build(n * m, n * m + 1).y;
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
