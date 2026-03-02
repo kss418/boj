@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 201010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+ll solve1(ll t, ll cow){
+    if(t < 2 * cow) return cow;
+    ll ret = cow, cy = cow + 1, cur = 2 * cow - 1;
+    while(cur + cy <= t){
+        cur += cy; cy = cur / 2 + 1;
+        ret = cur / 2;
+    }
+
+    return ret - (t - cur);
+}
+
+ll solve2(ll t, ll pos){
+    if(t < 2 * pos) return pos;
+    int lg = __lg(t);
+    for(int i = lg;i >= 0;i--){
+        ll nt = t - (1ll << i);
+        ll np = pos + (1ll << i);
+        if(np <= nt / 2){
+            pos = np; t = nt;
+        }
+    }
+
+    if(t - 1 == 2 * (pos + 1) - 1) return pos + 1; 
+    return solve2(t - 1, 0);
+}
+
+void run(){
+    cin >> n;
+    while(n--){
+        ll op, t, x; cin >> op >> x >> t;
+        if(op == 1) cout << solve1(t, x) << "\n";
+        else cout << solve2(t, x) << "\n";
+    }
+
+}
+
+int main() {
+    fastio; // cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
