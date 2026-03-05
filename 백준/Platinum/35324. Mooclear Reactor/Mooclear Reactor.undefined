@@ -1,0 +1,123 @@
+#include <bits/stdc++.h>
+#define fastio cin.tie(0), cout.tie(0), ios::sync_with_stdio(0);
+#define all(x) (x).begin(), (x).end()
+#define x first 
+#define y second
+using namespace std; using ll = long long; using u64 = uint64_t;
+using ld = long double; using pld = pair<ld, ld>;
+using i128 = __int128_t; using f128 = __float128; 
+using pll = pair<ll, ll>; using tll = tuple<ll, ll, ll>;
+ll n, m, k, t = 1; string s;
+
+constexpr ll INF = 0x3f3f3f3f3f3f3f3f;
+constexpr ll MINF = 0xc0c0c0c0c0c0c0c0;
+constexpr ll MAX = 201010; // SET MAX SIZE
+constexpr ll MOD = 998244353;
+
+vector <pair<int, int>> adj[MAX];
+bool v[MAX], flag;
+int sign[MAX], l[MAX], r[MAX];
+ll pl[MAX], val[MAX];
+vector <int> idx[MAX];
+
+void dfs(int cur, int root){
+    if(v[cur]) return; v[cur] = 1;
+    idx[root].push_back(cur);
+
+    for(auto& [nxt, c] : adj[cur]){
+        if(!v[nxt]){
+            sign[nxt] = -sign[cur];
+            pl[nxt] = -pl[cur] + c;
+            dfs(nxt, root);
+        }
+        else if(sign[nxt] != sign[cur]){
+            ll tmp = -pl[cur] + c;
+            if(tmp != pl[nxt]) flag = 0;
+        }
+        else{
+            ll tmp = 2 * (c - pl[cur] - pl[nxt]) / (sign[nxt] + sign[cur]);
+            if(tmp & 1){
+                flag = 0; return;
+            }
+
+            tmp >>= 1ll;
+            if(val[root] == MINF) val[root] = tmp;
+            else if(val[root] != tmp) flag = 0;
+        }   
+    }
+}
+
+void init(){
+    flag = 1;
+    for(int i = 1;i <= n;i++){
+        v[i] = 0;
+        adj[i].clear();
+        pl[i] = 0;
+        sign[i] = 1;
+        val[i] = MINF;
+        idx[i].clear();
+    }
+}
+
+void run(){
+    cin >> n >> m; init();
+    for(int i = 1;i <= n;i++) cin >> l[i];
+    for(int i = 1;i <= n;i++) cin >> r[i];
+
+    while(m--){
+        int s, e, c; cin >> s >> e >> c;
+        adj[s].push_back({e, c});
+        adj[e].push_back({s, c});
+    }
+
+    for(int i = 1;i <= n;i++){
+        if(v[i]) continue;
+        dfs(i, i);
+    }
+
+    if(!flag){
+        cout << -1 << "\n"; return;
+    }
+
+    int result = 0;
+    for(int i = 1;i <= n;i++){
+        if(val[i] == MINF){
+            vector <pair<ll, int>> arr;
+            for(auto& j : idx[i]){
+                ll cl = l[j], cr = r[j];
+                cl -= pl[j]; cr -= pl[j];
+                if(sign[j] == -1){
+                    swap(cl, cr);
+                    cl *= -1; cr *= -1;
+                }
+
+                arr.push_back({cl, 1});
+                arr.push_back({cr + 1, -1});
+            }
+            sort(all(arr));
+
+            int mx = 0, now = 0; ll la = -1;
+            for(auto& [pos, v] : arr){
+                if(pos != la) mx = max(mx, now);
+                pos = la; now += v;
+            }
+            
+            result += max(mx, now);
+        }
+        else{
+            for(auto& j : idx[i]){
+                ll tmp = val[i] * sign[j] + pl[j];
+                result += (tmp >= l[j] && tmp <= r[j]);
+            }
+        }
+    }
+    
+    cout << result << "\n";
+}
+
+int main() {
+    fastio; cin >> t;
+    while(t--) run(); 
+
+    return 0;
+}
