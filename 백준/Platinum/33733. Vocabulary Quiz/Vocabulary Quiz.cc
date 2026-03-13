@@ -72,8 +72,8 @@ concept has_inv = requires(const typename policy::node& a){
 
 struct group{
     struct node{
-        ll v;
-        node(ll v = 0) : v(v){}
+        int v;
+        node(int v = 0) : v(v){}
     };
     static node op(const node& l, const node& r){
         return {l.v + r.v};
